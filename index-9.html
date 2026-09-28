@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>¿Cuánto tengo que cobrar?</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f2f5f9;color:#17202a}header{background:#0b1f3a;color:#fff;padding:20px;text-align:center}main{max-width:980px;margin:auto;padding:18px}.card{background:#fff;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 3px 14px #0001}h1,h2{margin-top:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}label{font-weight:bold;font-size:14px;display:block}input,select,button{width:100%;padding:12px;border-radius:9px;border:1px solid #ccd4df;font-size:16px}button{background:#0b1f3a;color:#fff;border:0;font-weight:bold;cursor:pointer;margin-top:8px}.secondary{background:#64748b}.danger{background:#b42318}.success{background:#137333}.hidden{display:none!important}.msg{padding:12px;border-radius:9px;margin:10px 0;background:#eef4ff}.error{background:#fff0f0;color:#9b1c1c}.ok{background:#eefaf0;color:#176b2b}.result{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.box{background:#f7f9fc;padding:12px;border-radius:10px}.money{font-size:20px;font-weight:bold}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:9px;border-bottom:1px solid #ddd;text-align:left}.small{font-size:13px;color:#667085}.topbar{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap}.badge{display:inline-block;padding:6px 10px;border-radius:99px;background:#e8eef7;font-weight:bold}.auth{max-width:480px;margin:25px auto}.print-only{display:none}@media print{.no-print{display:none!important}.print-only{display:block}body{background:white}.card{box-shadow:none;border:1px solid #ddd}}
+</style>
+</head>
+<body>
+<header><h1>¿Cuánto tengo que cobrar?</h1><div>Calculadora salarial · CCT 507/07</div></header>
+<main>
+<section id="auth" class="card auth">
+<h2>Ingresar</h2>
+<div id="authMsg" class="msg hidden"></div>
+<div id="loginForm">
+<label>Email<input id="loginEmail" type="email" autocomplete="email"></label><br>
+<label>Contraseña<input id="loginPass" type="password" autocomplete="current-password"></label>
+<button onclick="login()">Ingresar</button>
+<button class="secondary" onclick="showRegister()">Crear cuenta</button>
+<button class="secondary" onclick="resetPassword()">Olvidé mi contraseña</button>
+</div>
+<div id="registerForm" class="hidden">
+<h2>Crear cuenta</h2>
+<label>Nombre completo<input id="regName" type="text"></label><br>
+<label>Email<input id="regEmail" type="email"></label><br>
+<label>Contraseña<input id="regPass" type="password" minlength="6"></label>
+<button onclick="register()">Registrarme</button>
+<button class="secondary" onclick="showLogin()">Volver</button>
+</div>
+</section>
+<section id="pending" class="card hidden"><h2>Cuenta pendiente de activación</h2><p>Tu cuenta fue creada correctamente, pero todavía no está habilitada para usar la calculadora.</p><p>Cuando el administrador active tu cuenta PRO podrás ingresar.</p><button onclick="logout()" class="secondary">Cerrar sesión</button></section>
+<section id="app" class="hidden">
+<div class="card topbar"><div>Usuario: <b id="userEmail"></b> <span id="roleBadge" class="badge"></span></div><button onclick="logout()" class="secondary" style="width:auto">Cerrar sesión</button></div>
+<div class="card">
+<h2>Datos laborales</h2>
+<div class="grid">
+<div><label>Periodo<input id="periodo" value="Septiembre 2026"></label></div>
+<div><label>Categoría<select id="categoria"><option>Vigilador General</option><option>Vigilador Principal</option><option>Operador de Monitoreo</option><option>Administrativo</option></select></label></div>
+<div><label>Tipo de servicio<select id="tipo"><option value="general">General</option><option value="aero">Aeroportuario</option><option value="puerto">Portuario</option><option value="ambos">Aeroportuario + Portuario</option></select></label></div>
+<div><label>Sueldo básico<input id="basico" type="number" value="1037600"></label></div>
+<div><label>Antigüedad (años)<input id="antiguedad" type="number" value="11"></label></div>
+<div><label>Horas trabajadas<input id="horas" type="number" value="204"></label></div>
+<div><label>Horas nocturnas<input id="nocturnas" type="number" value="153"></label></div>
+<div><label>Feriados<input id="feriados" type="number" value="0"></label></div>
+<div><label>Horas extra 50%<input id="extra50" type="number" value="4"></label></div>
+<div><label>Horas extra 100%<input id="extra100" type="number" value="0"></label></div>
+<div><label>Presentismo<input id="presentismo" type="number" value="180000"></label></div>
+<div><label>Viáticos<input id="viaticos" type="number" value="524000"></label></div>
+<div><label>Adicional no remunerativo<input id="noRem" type="number" value="50000"></label></div>
+<div><label>Adicional aeroportuario<input id="aero" type="number" value="0"></label></div>
+<div><label>Adicional portuario<input id="puerto" type="number" value="0"></label></div>
+</div></div>
+<div class="card"><h2>Vacaciones y suspensión</h2><div class="grid">
+<div><label>Días de vacaciones<input id="diasVac" type="number" value="0"></label></div>
+<div><label>Valor diario vacacional<input id="valorVac" type="number" value="0"></label></div>
+<div><label>Días de suspensión<input id="susp" type="number" value="0"></label></div>
+<div><label>Descuento/manutención (%)<input id="man" type="number" value="20"></label></div>
+</div></div>
+<div class="card"><h2>Descuentos</h2><div class="grid">
+<div><label>Jubilación (%)<input id="jub" type="number" value="11"></label></div>
+<div><label>Obra social (%)<input id="os" type="number" value="3"></label></div>
+<div><label>Aporte solidario UPSRA<input id="solidario" type="number" value="20000"></label></div>
+</div></div>
+<div class="card"><button class="success" onclick="calcular()">CALCULAR</button><button class="secondary" onclick="window.print()">IMPRIMIR / GUARDAR PDF</button></div>
+<div id="resultCard" class="card hidden"><h2>Resultado</h2><div id="resultado" class="result"></div><button onclick="guardarCalculo()">Guardar cálculo</button><div id="saveMsg" class="msg hidden"></div></div>
+<div class="card"><h2>Historial</h2><button class="secondary" onclick="cargarHistorial()">Actualizar historial</button><div id="historial"></div></div>
+<div id="adminCard" class="card hidden"><h2>Administración</h2><p>La activación de usuarios se realiza desde Supabase. No se permite cambiar el plan desde el navegador.</p><p class="small">Planes: pending · pro · admin</p></div>
+</section>
+</main>
+<script>
+// ============================================================
+// CONFIGURACIÓN: PEGÁ AQUÍ LOS DATOS PÚBLICOS DE SUPABASE
+// NO PEGUES NUNCA LA SERVICE_ROLE KEY EN ESTE ARCHIVO.
+// ============================================================
+const SUPABASE_URL="PEGAR_AQUI_URL_DE_SUPABASE";
+const SUPABASE_ANON_KEY="PEGAR_AQUI_ANON_O_PUBLISHABLE_KEY";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let currentUser=null,currentPlan=null,lastCalculation=null;
+const $=id=>document.getElementById(id);
+const n=id=>Math.max(0,Number($(id).value)||0);
+const money=v=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(v||0);
+function msg(text,type=''){const e=$('authMsg');e.textContent=text;e.className='msg '+(type||'');e.classList.remove('hidden')}
+function showLogin(){$('loginForm').classList.remove('hidden');$('registerForm').classList.add('hidden');msg('')}
+function showRegister(){$('loginForm').classList.add('hidden');$('registerForm').classList.remove('hidden');msg('')}
+async function register(){
+ const name=$('regName').value.trim(),email=$('regEmail').value.trim(),password=$('regPass').value;
+ if(!name||!email||password.length<6){msg('Completá nombre, email y una contraseña de al menos 6 caracteres.','error');return}
+ const {data,error}=await sb.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:location.origin+location.pathname}});
+ if(error){msg(error.message,'error');return}
+ msg(data.session?'Cuenta creada.':'Cuenta creada. Revisá tu email para confirmar la cuenta.','ok');showLogin();
+}
+async function login(){
+ const email=$('loginEmail').value.trim(),password=$('loginPass').value;
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){msg(error.message,'error');return} await loadUser(data.user);
+}
+async function resetPassword(){
+ const email=$('loginEmail').value.trim();if(!email){msg('Primero escribí tu email.','error');return}
+ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+ if(error){msg(error.message,'error');return}msg('Te enviamos un enlace para restablecer la contraseña.','ok');
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+async function loadUser(user){
+ currentUser=user;$('auth').classList.add('hidden');$('pending').classList.add('hidden');$('app').classList.add('hidden');
+ const {data,error}=await sb.from('profiles').select('plan,full_name').eq('id',user.id).single();
+ if(error||!data){$('pending').classList.remove('hidden');return}
+ currentPlan=data.plan;$('userEmail').textContent=user.email||'';$('roleBadge').textContent=data.plan.toUpperCase();
+ if(data.plan!=='pro'&&data.plan!=='admin'){$('pending').classList.remove('hidden');return}
+ $('app').classList.remove('hidden');if(data.plan==='admin')$('adminCard').classList.remove('hidden');cargarHistorial();
+}
+function calcular(){
+ const b=n('basico'),ant=n('antiguedad'),noct=n('nocturnas'),fer=n('feriados'),e50=n('extra50'),e100=n('extra100'),pre=n('presentismo'),via=n('viaticos'),nr=n('noRem'),dv=n('diasVac'),vv=n('valorVac'),su=n('susp'),man=n('man'),jp=n('jub'),op=n('os'),sol=n('solidario'),t=$('tipo').value;
+ if(!b){alert('Ingresá el sueldo básico');return}
+ const h=b/200,a=b*.01*ant,nn=h*.01*noct,x50=h*1.5*e50,x100=h*2*e100,f=h*2*fer,ae=(t==='aero'||t==='ambos')?n('aero'):0,pu=(t==='puerto'||t==='ambos')?n('puerto'):0,v=dv*vv;
+ const sd=h*su+pre/30*su+via/30*su,rem=Math.max(0,b+a+nn+x50+x100+f+pre+ae+pu+v-sd),j=rem*jp/100,o=rem*op/100,ma=rem*man/100,d=j+o+sol+ma,net=rem+via+nr-d;
+ lastCalculation={periodo:$('periodo').value,categoria:$('categoria').value,tipo:t,basico:b,antiguedad:ant,horas:n('horas'),nocturnas:noct,feriados:fer,extra50:e50,extra100:e100,presentismo:pre,viaticos:via,noRem:nr,aero:ae,puerto:pu,diasVac:dv,valorVac:vv,suspension:su,manutencion:man,valorHora:h,antiguedadMonto:a,nocturnidad:nn,extra50Monto:x50,extra100Monto:x100,feriadosMonto:f,aeroMonto:ae,puertoMonto:pu,vacaciones:v,suspensionMonto:sd,remunerativo:rem,jubilacion:j,obraSocial:o,manutencionMonto:ma,solidario:sol,descuentos:d,neto:net};
+ const rows=[['Valor hora',h],['Antigüedad',a],['Nocturnidad',nn],['Extras 50%',x50],['Extras 100%',x100],['Feriados',f],['Aeroportuario',ae],['Portuario',pu],['Vacaciones / plus',v],['Suspensión descontada',-sd],['Remunerativo',rem],['No remunerativo',nr],['Jubilación',-j],['Obra social',-o],['UPSRA solidario',-sol],['Manutención / descuento',-ma],['TOTAL DESCUENTOS',d],['NETO ESTIMADO',net]];
+ $('resultado').innerHTML=rows.map(r=>`<div class="box"><div>${r[0]}</div><div class="money">${money(r[1])}</div></div>`).join('');$('resultCard').classList.remove('hidden');
+}
+async function guardarCalculo(){
+ if(!currentUser||!lastCalculation)return;const {error}=await sb.from('calculations').insert({user_id:currentUser.id,periodo:lastCalculation.periodo,neto:lastCalculation.neto,payload:lastCalculation});const e=$('saveMsg');e.className='msg '+(error?'error':'ok');e.textContent=error?error.message:'Cálculo guardado correctamente.';e.classList.remove('hidden');if(!error)cargarHistorial();
+}
+async function cargarHistorial(){
+ if(!currentUser)return;const {data,error}=await sb.from('calculations').select('id,periodo,neto,created_at').order('created_at',{ascending:false}).limit(50);if(error){$('historial').innerHTML='<p class="small">'+error.message+'</p>';return}
+ if(!data.length){$('historial').innerHTML='<p class="small">Todavía no hay cálculos guardados.</p>';return}
+ $('historial').innerHTML='<table class="table"><tr><th>Fecha</th><th>Periodo</th><th>Neto</th></tr>'+data.map(x=>`<tr><td>${new Date(x.created_at).toLocaleString('es-AR')}</td><td>${x.periodo||''}</td><td>${money(x.neto)}</td></tr>`).join('')+'</table>';
+}
+(async function(){
+ const {data}=await sb.auth.getSession();if(data.session)await loadUser(data.session.user);else $('auth').classList.remove('hidden');
+ sb.auth.onAuthStateChange(async(_event,session)=>{if(session&&!currentUser)await loadUser(session.user)});
+})();
+</script>
+</body></html>
